@@ -18,7 +18,6 @@ package controller
 
 import (
 	"github.com/go-logr/logr"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cluster"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
