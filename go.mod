@@ -1,4 +1,4 @@
-module github.com/davidmogar/operator-toolkit
+module github.com/redhat-appstudio/operator-toolkit
 
 go 1.19
 
