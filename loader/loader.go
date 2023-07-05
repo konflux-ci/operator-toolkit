@@ -7,28 +7,29 @@ import (
 )
 
 type (
-	contextKey int
+	// ContextKey is a kye that will be used within a context to reference a MockData item.
+	ContextKey int
 
 	// MockData represents the mocked data that will be returned by a mocked loader method.
 	MockData struct {
-		ContextKey contextKey
+		ContextKey ContextKey
 		Err        error
 		Resource   any
 	}
 )
 
-// GetObject loads an object from the cluster. This is a generic function that requires the object to be passed as an
-// argument. The object is modified during the invocation.
-func GetObject(name, namespace string, cli client.Client, ctx context.Context, object client.Object) error {
-	return cli.Get(ctx, types.NamespacedName{
-		Name:      name,
-		Namespace: namespace,
-	}, object)
+// GetMockedContext creates a new context with the given MockData items.
+func GetMockedContext(ctx context.Context, data []MockData) context.Context {
+	for _, mockData := range data {
+		ctx = context.WithValue(ctx, mockData.ContextKey, mockData)
+	}
+
+	return ctx
 }
 
 // GetMockedResourceAndErrorFromContext returns the mocked data found in the context passed as an argument. The data is
 // to be found in the contextDataKey key. If not there, a panic will be raised.
-func GetMockedResourceAndErrorFromContext[T any](ctx context.Context, contextKey contextKey, _ T) (T, error) {
+func GetMockedResourceAndErrorFromContext[T any](ctx context.Context, contextKey ContextKey, _ T) (T, error) {
 	var resource T
 	var err error
 
@@ -48,4 +49,13 @@ func GetMockedResourceAndErrorFromContext[T any](ctx context.Context, contextKey
 	}
 
 	return resource, err
+}
+
+// GetObject loads an object from the cluster. This is a generic function that requires the object to be passed as an
+// argument. The object is modified during the invocation.
+func GetObject(name, namespace string, cli client.Client, ctx context.Context, object client.Object) error {
+	return cli.Get(ctx, types.NamespacedName{
+		Name:      name,
+		Namespace: namespace,
+	}, object)
 }
