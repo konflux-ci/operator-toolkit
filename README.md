@@ -1,8 +1,8 @@
-# operator-toolkit
+# Operator Toolkit
 
-Operator-toolkit is a framework and collection of helpers designed to facilitate the development of Kubernetes
+Operator Toolkit is a framework and collection of helpers designed to facilitate the development of Kubernetes
 operators. With the goal of promoting code homogeneity across different operators, the toolkit offers a comprehensive
-set of tools and best practices. By leveraging operator-toolkit, you can streamline the construction of Kubernetes operators and ensure consistent coding
+set of tools and best practices. By leveraging Operator Toolkit, you can streamline the construction of Kubernetes operators and ensure consistent coding
 patterns and practices across your projects.
 
 For detailed documentation, guides, and examples, please refer to the
