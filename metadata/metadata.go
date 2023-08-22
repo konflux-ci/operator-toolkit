@@ -54,6 +54,70 @@ func AddLabels(obj v1.Object, entries map[string]string) error {
 	return nil
 }
 
+// CopyAnnotationsByPrefix copies all annotations from a source object to a destination object where the key matches
+// the specified sourcePrefix.
+func CopyAnnotationsByPrefix(source, destination v1.Object, prefix string) error {
+	if source == nil || destination == nil {
+		return errors.New("object cannot be nil")
+	}
+
+	if destination.GetAnnotations() == nil {
+		destination.SetAnnotations(make(map[string]string))
+	}
+	copyByPrefix(source.GetAnnotations(), destination.GetAnnotations(), prefix)
+
+	return nil
+}
+
+// CopyAnnotationsWithPrefixReplacement copies all annotations from a source object to a destination object where the
+// key matches the specified sourcePrefix. The source prefix will be replaced with the destination prefix.
+func CopyAnnotationsWithPrefixReplacement(source, destination v1.Object, sourcePrefix, destinationPrefix string) error {
+	if source == nil || destination == nil {
+		return errors.New("object cannot be nil")
+	}
+
+	if destination.GetAnnotations() == nil {
+		destination.SetAnnotations(make(map[string]string))
+	}
+
+	copyWithPrefixReplacement(source.GetAnnotations(), destination.GetAnnotations(), sourcePrefix, destinationPrefix)
+
+	return nil
+}
+
+// CopyLabelsByPrefix copies all labels from a source object to a destination object where the key matches the
+// specified sourcePrefix.
+func CopyLabelsByPrefix(source, destination v1.Object, prefix string) error {
+	if source == nil || destination == nil {
+		return errors.New("object cannot be nil")
+	}
+
+	if destination.GetLabels() == nil {
+		destination.SetLabels(make(map[string]string))
+	}
+
+	copyByPrefix(source.GetLabels(), destination.GetLabels(), prefix)
+
+	return nil
+}
+
+// CopyLabelsWithPrefixReplacement copies all labels from a source object to a destination object where the key matches
+//the specified sourcePrefix. If destinationPrefix is different from sourcePrefix, the sourcePrefix will be replaced
+// while performing the copy.
+func CopyLabelsWithPrefixReplacement(source, destination v1.Object, sourcePrefix, destinationPrefix string) error {
+	if source == nil || destination == nil {
+		return errors.New("object cannot be nil")
+	}
+
+	if destination.GetLabels() == nil {
+		destination.SetLabels(make(map[string]string))
+	}
+
+	copyWithPrefixReplacement(source.GetLabels(), destination.GetLabels(), sourcePrefix, destinationPrefix)
+
+	return nil
+}
+
 // GetAnnotationsWithPrefix is a method that returns a map of key/value pairs matching a prefix string.
 // The unexported function filterByPrefix is called with args passed.
 func GetAnnotationsWithPrefix(obj v1.Object, prefix string) (map[string]string, error) {
@@ -74,11 +138,54 @@ func GetLabelsWithPrefix(obj v1.Object, prefix string) (map[string]string, error
 	return filterByPrefix(obj.GetLabels(), prefix), nil
 }
 
+// HasAnnotation checks whether a given annotation exists or not.
+func HasAnnotation(obj v1.Object, key string) bool {
+	_, ok := obj.GetAnnotations()[key]
+	return ok
+}
+
+// HasAnnotationWithValue checks if an annotation exists and has the given value.
+func HasAnnotationWithValue(obj v1.Object, key, value string) bool {
+	val, ok := obj.GetAnnotations()[key]
+	return ok && val == value
+}
+
+// HasLabel checks whether a given Label exists or not.
+func HasLabel(obj v1.Object, key string) bool {
+	_, ok := obj.GetLabels()[key]
+	return ok
+}
+
+// HasLabelWithValue checks if a label exists and has the given value.
+func HasLabelWithValue(obj v1.Object, key, value string) bool {
+	val, ok := obj.GetLabels()[key]
+	return ok && val == value
+}
+
 // addEntries copies key/value pairs in the source map adding them into the destination map.
 // The unexported function safeCopy is used to copy, and avoids clobbering existing keys in the destination map.
 func addEntries(source, destination map[string]string) {
 	for key, val := range source {
 		safeCopy(destination, key, val)
+	}
+}
+
+// copyByPrefix copies key/value pairs from a source map to a destination map where the key matches the specified prefix.
+func copyByPrefix(source, destination map[string]string, prefix string) {
+	copyWithPrefixReplacement(source, destination, prefix, prefix)
+}
+
+// copyWithPrefixReplacement copies key/value pairs from a source map to a destination map where the key matches the 
+// specified sourcePrefix. The source prefix will be replaced with the destination prefix.
+func copyWithPrefixReplacement(source, destination map[string]string, sourcePrefix, destinationPrefix string) {
+	for key, value := range source {
+		if strings.HasPrefix(key, sourcePrefix) {
+			newKey := key
+			if sourcePrefix != destinationPrefix {
+				newKey = strings.Replace(key, sourcePrefix, destinationPrefix, 1)
+			}
+			destination[newKey] = value
+		}
 	}
 }
 
