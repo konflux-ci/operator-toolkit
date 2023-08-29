@@ -69,7 +69,7 @@ var _ = Describe("Metadata", func() {
 			Expect(pod.Labels).To(Equal(labels))
 		})
 
-		It("should add the annotations to the existing ones", func() {
+		It("should add the labels to the existing ones", func() {
 			labels := map[string]string{"foo": "bar", "baz": "qux"}
 			pod := &corev1.Pod{
 				ObjectMeta: v1.ObjectMeta{
@@ -89,6 +89,398 @@ var _ = Describe("Metadata", func() {
 			err := AddLabels(nil, map[string]string{})
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("object cannot be nil"))
+		})
+	})
+
+	When("CopyAnnotationsByPrefix is called", func() {
+		It("should return all the annotations matching the given prefix", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyAnnotationsByPrefix(podSource, podDest, "fo")).To(Succeed())
+			Expect(podDest.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo":  Equal("bar"),
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should copy all the annotations matching the given prefix when Annotations in destination is empty", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{},
+			}
+
+			Expect(CopyAnnotationsByPrefix(podSource, podDest, "fo")).To(Succeed())
+			Expect(podDest.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo": Equal("bar"),
+			}))
+		})
+
+		It("should copy nothing to the destination when annotations in source is nil ", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyAnnotationsByPrefix(podSource, podDest, "fo")).To(Succeed())
+			Expect(podDest.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should return error when source is nil", func() {
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyAnnotationsByPrefix(nil, podDest, "fo")).NotTo(BeNil())
+			Expect(podDest.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should return error when destination is nil", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyAnnotationsByPrefix(podSource, nil, "fo")).NotTo(BeNil())
+		})
+	})
+
+	When("CopyAnnotationsWithPrefixReplacement is called", func() {
+		It("should return all the annotations matching the given prefix", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyAnnotationsWithPrefixReplacement(podSource, podDest, "fo", "ba")).To(Succeed())
+			Expect(podDest.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"bao":  Equal("bar"),
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should copy all the annotations matching the given prefix when Annotations in destination is empty", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{},
+			}
+
+			Expect(CopyAnnotationsWithPrefixReplacement(podSource, podDest, "fo", "ba")).To(Succeed())
+			Expect(podDest.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"bao": Equal("bar"),
+			}))
+		})
+
+		It("should copy nothing to the destination when annotations in source is nil ", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyAnnotationsWithPrefixReplacement(podSource, podDest, "fo", "ba")).To(Succeed())
+			Expect(podDest.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should return error when source is nil", func() {
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyAnnotationsWithPrefixReplacement(nil, podDest, "fo", "ba")).NotTo(BeNil())
+			Expect(podDest.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should return error when destination is nil", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyAnnotationsWithPrefixReplacement(podSource, nil, "fo", "ba")).NotTo(BeNil())
+		})
+	})
+
+	When("CopyLabelsByPrefix is called", func() {
+		It("should return all the labels matching the given prefix", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyLabelsByPrefix(podSource, podDest, "fo")).To(Succeed())
+			Expect(podDest.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo":  Equal("bar"),
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should copy all the labels matching the given prefix when Labels in destination is empty", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{},
+			}
+
+			Expect(CopyLabelsByPrefix(podSource, podDest, "fo")).To(Succeed())
+			Expect(podDest.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo": Equal("bar"),
+			}))
+		})
+
+		It("should copy nothing to the destination when Labels in source is nil ", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyLabelsByPrefix(podSource, podDest, "fo")).To(Succeed())
+			Expect(podDest.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should return error when source is nil", func() {
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyLabelsByPrefix(nil, podDest, "fo")).NotTo(BeNil())
+			Expect(podDest.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should return error when destination is nil", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyLabelsByPrefix(podSource, nil, "fo")).NotTo(BeNil())
+		})
+	})
+
+	When("CopyLabelsWithPrefixReplacement is called", func() {
+		It("should return all the labels matching the given prefix", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyLabelsWithPrefixReplacement(podSource, podDest, "fo", "ba")).To(Succeed())
+			Expect(podDest.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"bao":  Equal("bar"),
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should copy all the labels matching the given prefix when Labels in destination is empty", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{},
+			}
+
+			Expect(CopyLabelsWithPrefixReplacement(podSource, podDest, "fo", "ba")).To(Succeed())
+			Expect(podDest.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"bao": Equal("bar"),
+			}))
+		})
+
+		It("should copy nothing to the destination when Labels in source is nil ", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{},
+			}
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyLabelsWithPrefixReplacement(podSource, podDest, "fo", "ba")).To(Succeed())
+			Expect(podDest.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should return error when source is nil", func() {
+			podDest := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyLabelsWithPrefixReplacement(nil, podDest, "fo", "ba")).NotTo(BeNil())
+			Expect(podDest.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should return error when destination is nil", func() {
+			podSource := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(CopyLabelsWithPrefixReplacement(podSource, nil, "fo", "ba")).NotTo(BeNil())
+		})
+	})
+
+	When("HasAnnotation is called", func() {
+		It("should return true when the annotation is found", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"bar": "foo", "baz": "qux"},
+				},
+			}
+
+			Expect(HasAnnotation(pod, "bar")).To(BeTrue())
+		})
+
+		It("should return false when the annotation is not found", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"bar": "foo", "baz": "qux"},
+				},
+			}
+
+			Expect(HasAnnotation(pod, "nobar")).To(BeFalse())
+		})
+	})
+
+	When("HasAnnotationWithValue is called", func() {
+		It("should return true when the annotation with the given value is found", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"bar": "foo", "baz": "qux"},
+				},
+			}
+
+			Expect(HasAnnotationWithValue(pod, "bar", "foo")).To(BeTrue())
+		})
+
+		It("should return false when the annotation with the given value is not found", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"bar": "foo", "baz": "qux"},
+				},
+			}
+
+			Expect(HasAnnotationWithValue(pod, "bar", "nofoo")).To(BeFalse())
+		})
+	})
+
+	When("HasLabel is called", func() {
+		It("should return true when the label is found", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"bar": "foo", "baz": "qux"},
+				},
+			}
+
+			Expect(HasLabel(pod, "bar")).To(BeTrue())
+		})
+
+		It("should return false when the label is not found", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"bar": "foo", "baz": "qux"},
+				},
+			}
+
+			Expect(HasLabel(pod, "nobar")).To(BeFalse())
+		})
+	})
+
+	When("HasLabelWithValue is called", func() {
+		It("should return true when the label with the given value is found", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"bar": "foo", "baz": "qux"},
+				},
+			}
+
+			Expect(HasLabelWithValue(pod, "bar", "foo")).To(BeTrue())
+		})
+
+		It("should return false when the label with the given value is not found", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"bar": "foo", "baz": "qux"},
+				},
+			}
+
+			Expect(HasLabelWithValue(pod, "bar", "nofoo")).To(BeFalse())
 		})
 	})
 
@@ -125,6 +517,7 @@ var _ = Describe("Metadata", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("object cannot be nil"))
 		})
+
 	})
 
 	When("GetLabelsWithPrefix is called", func() {
@@ -173,6 +566,33 @@ var _ = Describe("Metadata", func() {
 			for key, value := range source {
 				Expect(destination).To(HaveKeyWithValue(key, value))
 			}
+		})
+	})
+
+	When("copyByPrefix is called", func() {
+		It("should copy key/value pairs with the prefix to destination", func() {
+			source := map[string]string{"foo": "bar", "foz": "qux"}
+			destination := map[string]string{"quux": "corge"}
+			copyByPrefix(source, destination, "foo")
+			Expect(destination).To(HaveLen(2))
+			Expect(destination).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo":  Equal("bar"),
+				"quux": Equal("corge"),
+			}))
+		})
+	})
+
+	When("copyWithPrefixReplacement is called", func() {
+		It("should copy key/value pairs with the prefix to destination with new prefix", func() {
+			source := map[string]string{"foo": "bar", "foz": "qux"}
+			destination := map[string]string{"quux": "corge"}
+			copyWithPrefixReplacement(source, destination, "fo", "ba")
+			Expect(destination).To(HaveLen(3))
+			Expect(destination).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"bao":  Equal("bar"),
+				"baz":  Equal("qux"),
+				"quux": Equal("corge"),
+			}))
 		})
 	})
 
