@@ -18,8 +18,9 @@ package metadata
 
 import (
 	"errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // AddAnnotations copies the map into the resource's Annotations map.
@@ -172,6 +173,21 @@ func SetAnnotation(obj v1.Object, key string, value string) error {
 		obj.SetAnnotations(map[string]string{key: value})
 	} else {
 		annotations[key] = value
+	}
+
+	return nil
+}
+
+// SetLabel adds a new label to the referenced object or updates its value if it already exists.
+func SetLabel(obj v1.Object, key string, value string) error {
+	if obj == nil {
+		return errors.New("object cannot be nil")
+	}
+
+	if labels := obj.GetLabels(); labels == nil {
+		obj.SetLabels(map[string]string{key: value})
+	} else {
+		labels[key] = value
 	}
 
 	return nil
