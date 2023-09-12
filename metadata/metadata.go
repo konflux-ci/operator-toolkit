@@ -102,7 +102,7 @@ func CopyLabelsByPrefix(source, destination v1.Object, prefix string) error {
 }
 
 // CopyLabelsWithPrefixReplacement copies all labels from a source object to a destination object where the key matches
-//the specified sourcePrefix. If destinationPrefix is different from sourcePrefix, the sourcePrefix will be replaced
+// the specified sourcePrefix. If destinationPrefix is different from sourcePrefix, the sourcePrefix will be replaced
 // while performing the copy.
 func CopyLabelsWithPrefixReplacement(source, destination v1.Object, sourcePrefix, destinationPrefix string) error {
 	if source == nil || destination == nil {
@@ -162,6 +162,22 @@ func HasLabelWithValue(obj v1.Object, key, value string) bool {
 	return ok && val == value
 }
 
+// UpdateAnnotation updates an annotation to an object
+func UpdateAnnotation(obj v1.Object, key, value string) error {
+	if obj == nil {
+		return errors.New("object cannot be nil")
+	}
+
+	annotations := map[string]string{}
+	if obj.GetAnnotations() != nil {
+		annotations = obj.GetAnnotations()
+	}
+
+	annotations[key] = value
+	obj.SetAnnotations(annotations)
+	return nil
+}
+
 // addEntries copies key/value pairs in the source map adding them into the destination map.
 // The unexported function safeCopy is used to copy, and avoids clobbering existing keys in the destination map.
 func addEntries(source, destination map[string]string) {
@@ -175,7 +191,7 @@ func copyByPrefix(source, destination map[string]string, prefix string) {
 	copyWithPrefixReplacement(source, destination, prefix, prefix)
 }
 
-// copyWithPrefixReplacement copies key/value pairs from a source map to a destination map where the key matches the 
+// copyWithPrefixReplacement copies key/value pairs from a source map to a destination map where the key matches the
 // specified sourcePrefix. The source prefix will be replaced with the destination prefix.
 func copyWithPrefixReplacement(source, destination map[string]string, sourcePrefix, destinationPrefix string) {
 	for key, value := range source {

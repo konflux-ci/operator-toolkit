@@ -555,6 +555,42 @@ var _ = Describe("Metadata", func() {
 		})
 	})
 
+	When("UpdateAnnotation is called", func() {
+		It("should add the annotation to the object when object has no annotation", func() {
+			key := "foo"
+			value := "bar"
+			pod := &corev1.Pod{}
+
+			Expect(pod.Annotations).To(HaveLen(0))
+			Expect(UpdateAnnotation(pod, key, value)).To(Succeed())
+			Expect(pod.Annotations).To(HaveLen(1))
+			Expect(pod.Annotations).To(HaveKeyWithValue(key, value))
+		})
+
+		It("should update the annotation when object has an existing one with the same key", func() {
+			key := "foo"
+			value := "newbar"
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"foo": "bar", "baz": "qux"},
+				},
+			}
+
+			Expect(pod.Annotations).To(HaveLen(2))
+			Expect(UpdateAnnotation(pod, key, value)).To(Succeed())
+			Expect(pod.Annotations).To(HaveLen(2))
+			Expect(pod.Annotations).To(HaveKeyWithValue(key, value))
+		})
+
+		It("should error if the object is nil", func() {
+			key := "foo"
+			value := "bar"
+			err := UpdateAnnotation(nil, key, value)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("object cannot be nil"))
+		})
+	})
+
 	When("addEntries is called", func() {
 		It("should merge both maps", func() {
 			source := map[string]string{"foo": "bar", "baz": "qux"}
