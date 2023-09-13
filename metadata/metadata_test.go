@@ -555,6 +555,129 @@ var _ = Describe("Metadata", func() {
 		})
 	})
 
+	When("SetAnnotation is called", func() {
+		It("should error if the object is nil", func() {
+			err := SetAnnotation(nil, "foo", "bar")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("object cannot be nil"))
+		})
+
+		It("should add the annotation to the object", func() {
+			annotations := map[string]string{"foo": "bar"}
+			pod := &corev1.Pod{}
+
+			Expect(pod.Annotations).To(HaveLen(0))
+
+			for key, value := range annotations {
+				Expect(SetAnnotation(pod, key, value)).To(Succeed())
+			}
+
+			Expect(pod.Annotations).To(Equal(annotations))
+
+		})
+
+		It("should add the annotation to the existing ones", func() {
+			annotations := map[string]string{"foo": "bar"}
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(pod.Annotations).To(HaveLen(1))
+
+			for key, value := range annotations {
+				Expect(SetAnnotation(pod, key, value)).To(Succeed())
+			}
+
+			Expect(pod.Annotations).To(HaveLen(2))
+			Expect(pod.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo":  Equal("bar"),
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should update the existing annotation", func() {
+			annotations := map[string]string{"foo": "bar"}
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"foo": "corge"},
+				},
+			}
+
+			Expect(pod.Annotations).To(HaveLen(1))
+
+			for key, value := range annotations {
+				Expect(SetAnnotation(pod, key, value)).To(Succeed())
+			}
+
+			Expect(pod.Annotations).To(HaveLen(1))
+			Expect(pod.Annotations).To(Equal(annotations))
+
+		})
+	})
+
+	When("SetLabel is called", func() {
+		It("should error if the object is nil", func() {
+			err := SetLabel(nil, "foo", "bar")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("object cannot be nil"))
+		})
+
+		It("should add the label to the object", func() {
+			labels := map[string]string{"foo": "bar"}
+			pod := &corev1.Pod{}
+
+			Expect(pod.Labels).To(HaveLen(0))
+
+			for key, value := range labels {
+				Expect(SetLabel(pod, key, value)).To(Succeed())
+			}
+
+			Expect(pod.Labels).To(Equal(labels))
+		})
+
+		It("should add the label to the existing ones", func() {
+			labels := map[string]string{"foo": "bar"}
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(pod.Labels).To(HaveLen(1))
+
+			for key, value := range labels {
+				Expect(SetLabel(pod, key, value)).To(Succeed())
+			}
+
+			Expect(pod.Labels).To(HaveLen(2))
+			Expect(pod.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo":  Equal("bar"),
+				"quux": Equal("corge"),
+			}))
+		})
+
+		It("should update the existing label", func() {
+			labels := map[string]string{"foo": "bar"}
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"foo": "corge"},
+				},
+			}
+
+			Expect(pod.Labels).To(HaveLen(1))
+
+			for key, value := range labels {
+				Expect(SetLabel(pod, key, value)).To(Succeed())
+			}
+
+			Expect(pod.Labels).To(HaveLen(1))
+			Expect(pod.Labels).To(Equal(labels))
+
+		})
+	})
+
 	When("addEntries is called", func() {
 		It("should merge both maps", func() {
 			source := map[string]string{"foo": "bar", "baz": "qux"}
