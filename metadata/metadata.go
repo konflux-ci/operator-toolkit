@@ -119,6 +119,40 @@ func CopyLabelsWithPrefixReplacement(source, destination v1.Object, sourcePrefix
 	return nil
 }
 
+// DeleteAnnotation deletes the annotation specified by name from the referenced object.
+// If the annotation doesn't exist it's a no-op.
+func DeleteAnnotation(obj v1.Object, key string) error {
+	if obj == nil {
+		return errors.New("object cannot be nil")
+	}
+
+	annotations := obj.GetAnnotations()
+	if annotations == nil {
+		return nil // nothing to delete
+	}
+
+	delete(annotations, key)
+
+	return nil
+}
+
+// DeleteLabel deletes the label specified by name from the referenced object.
+// If the label doesn't exist it's a no-op.
+func DeleteLabel(obj v1.Object, key string) error {
+	if obj == nil {
+		return errors.New("object cannot be nil")
+	}
+
+	labels := obj.GetLabels()
+	if labels == nil {
+		return nil // nothing to delete
+	}
+
+	delete(labels, key)
+
+	return nil
+}
+
 // GetAnnotationsWithPrefix is a method that returns a map of key/value pairs matching a prefix string.
 // The unexported function filterByPrefix is called with args passed.
 func GetAnnotationsWithPrefix(obj v1.Object, prefix string) (map[string]string, error) {

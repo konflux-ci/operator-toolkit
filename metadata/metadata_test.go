@@ -396,6 +396,116 @@ var _ = Describe("Metadata", func() {
 		})
 	})
 
+	When("DeleteAnnotation is called", func() {
+		It("should error if the object is nil", func() {
+			err := DeleteAnnotation(nil, "foo")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("object cannot be nil"))
+		})
+
+		It("should not fail when deleting an annotation from an object with no annotations", func() {
+			pod := &corev1.Pod{}
+			Expect(pod.Annotations).To(HaveLen(0))
+			Expect(DeleteAnnotation(pod, "foo")).To(Succeed())
+		})
+
+		It("should not fail when deleting non-existent annotation from an object", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				}}
+
+			Expect(pod.Annotations).To(HaveLen(1))
+			Expect(DeleteAnnotation(pod, "foo")).To(Succeed())
+			Expect(pod.Annotations).To(HaveLen(1))
+		})
+
+		It("should remove the specified annotation", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(pod.Annotations).To(HaveLen(1))
+			Expect(DeleteAnnotation(pod, "quux")).To(Succeed())
+			Expect(pod.Annotations).To(HaveLen(0))
+		})
+
+		It("should remove the specified annotation and preserve the others", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						"quux": "corge",
+						"foo":  "bar",
+					},
+				},
+			}
+
+			Expect(pod.Annotations).To(HaveLen(2))
+			Expect(DeleteAnnotation(pod, "quux")).To(Succeed())
+			Expect(pod.Annotations).To(HaveLen(1))
+			Expect(pod.Annotations).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo": Equal("bar"),
+			}))
+		})
+	})
+
+	When("DeleteLabel is called", func() {
+		It("should error if the object is nil", func() {
+			err := DeleteLabel(nil, "foo")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("object cannot be nil"))
+		})
+
+		It("should not fail when deleting a label from an object with no labels", func() {
+			pod := &corev1.Pod{}
+			Expect(pod.Labels).To(HaveLen(0))
+			Expect(DeleteLabel(pod, "foo")).To(Succeed())
+		})
+
+		It("should not fail when deleting a non-existent label from an object", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				}}
+
+			Expect(pod.Labels).To(HaveLen(1))
+			Expect(DeleteLabel(pod, "foo")).To(Succeed())
+			Expect(pod.Labels).To(HaveLen(1))
+		})
+
+		It("should remove the specified label", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{"quux": "corge"},
+				},
+			}
+
+			Expect(pod.Labels).To(HaveLen(1))
+			Expect(DeleteLabel(pod, "quux")).To(Succeed())
+			Expect(pod.Labels).To(HaveLen(0))
+		})
+
+		It("should remove the specified label and preserve the others", func() {
+			pod := &corev1.Pod{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{
+						"quux": "corge",
+						"foo":  "bar",
+					},
+				},
+			}
+
+			Expect(pod.Labels).To(HaveLen(2))
+			Expect(DeleteLabel(pod, "quux")).To(Succeed())
+			Expect(pod.Labels).To(HaveLen(1))
+			Expect(pod.Labels).To(gstruct.MatchAllKeys(gstruct.Keys{
+				"foo": Equal("bar"),
+			}))
+		})
+	})
+
 	When("HasAnnotation is called", func() {
 		It("should return true when the annotation is found", func() {
 			pod := &corev1.Pod{
