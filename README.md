@@ -6,7 +6,7 @@ set of tools and best practices. By leveraging operator-toolkit, you can streaml
 patterns and practices across your projects.
 
 For detailed documentation, guides, and examples, please refer to the
-[project wiki](https://github.com/redhat-appstudio/operator-toolkit/wiki). The wiki serves as a
+[project wiki](https://github.com/konflux-ci/operator-toolkit/wiki). The wiki serves as a
 central resource for comprehensive information on the toolkit's various components and features. It provides detailed
 explanations, code samples, and best practices that will help you effectively utilize the toolkit to construct
 high-quality Kubernetes operators.
