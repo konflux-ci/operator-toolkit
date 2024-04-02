@@ -1,4 +1,4 @@
-module github.com/redhat-appstudio/operator-toolkit
+module github.com/konflux-ci/operator-toolkit
 
 go 1.19
 
