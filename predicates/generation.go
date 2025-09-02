@@ -75,7 +75,8 @@ func (GenerationUnchangedOnUpdatePredicate) Update(e event.UpdateEvent) bool {
 	return e.ObjectNew.GetGeneration() == e.ObjectOld.GetGeneration()
 }
 
-// TypedGenerationChangedPredicate implements a default typed predicate function on Generation changes.
+// TypedGenerationChangedPredicate implements a default typed predicate function on Generation changes. Because only Update
+// func is defined, Create, Delete, and Generic will return true
 //
 // This predicate will skip any event except updates. In the case of update events that have a change in the
 // object's metadata.generation field, those events will be processed. The metadata.generation field of an object
@@ -83,21 +84,6 @@ func (GenerationUnchangedOnUpdatePredicate) Update(e event.UpdateEvent) bool {
 // only process update events where the spec has changed, ignoring updates where only metadata and/or status fields are changed.
 type TypedGenerationChangedPredicate[T client.Object] struct {
 	predicate.TypedFuncs[T]
-}
-
-// Create implements default TypedCreateEvent filter for validating generation change.
-func (TypedGenerationChangedPredicate[T]) Create(e event.TypedCreateEvent[T]) bool {
-	return false
-}
-
-// Delete implements default TypedDeleteEvent filter for validating generation change.
-func (TypedGenerationChangedPredicate[T]) Delete(e event.TypedDeleteEvent[T]) bool {
-	return false
-}
-
-// Generic implements default TypedGenericEvent filter for validating generation change.
-func (TypedGenerationChangedPredicate[T]) Generic(e event.TypedGenericEvent[T]) bool {
-	return false
 }
 
 // Update implements default TypedUpdateEvent filter for validating generation change.
