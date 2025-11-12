@@ -129,4 +129,64 @@ var _ = Describe("Loader", func() {
 		})
 	})
 
+	When("GetMockedContextWithClient is called", func() {
+		It("should return a context with loader mocks and a mock client", func() {
+			var loaderKey ContextKey = 200
+
+			loaderCM := &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "loader-cm",
+				},
+			}
+
+			createErr := errors.NewBadRequest("create error")
+
+			mockContext, mockClient := GetMockedContextWithClient(
+				ctx,
+				k8sClient,
+				[]MockData{
+					{
+						ContextKey: loaderKey,
+						Resource:   loaderCM,
+					},
+				},
+				[]ClientCallMock{
+					{
+						Operation:  OperationCreate,
+						ObjectType: &v1.ConfigMap{},
+						Err:        createErr,
+					},
+				},
+			)
+
+			// Verify loader mock
+			resource, err := GetMockedResourceAndErrorFromContext(mockContext, loaderKey, &v1.ConfigMap{})
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resource.Name).To(Equal("loader-cm"))
+
+			// Verify client mock
+			Expect(mockClient).ToNot(BeNil())
+			newCM := &v1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test",
+					Namespace: "default",
+				},
+			}
+			err = mockClient.Create(mockContext, newCM)
+			Expect(err).To(Equal(createErr))
+		})
+
+		It("should work with empty mock slices", func() {
+			mockContext, mockClient := GetMockedContextWithClient(
+				ctx,
+				k8sClient,
+				[]MockData{},
+				[]ClientCallMock{},
+			)
+
+			Expect(mockContext).ToNot(BeNil())
+			Expect(mockClient).ToNot(BeNil())
+		})
+	})
+
 })
